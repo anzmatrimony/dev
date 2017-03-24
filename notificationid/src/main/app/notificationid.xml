@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:listener-config name="notificationid-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="notificationid-config" raml="notificationid.raml" consoleEnabled="false" doc:name="Router"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="anz_user/notification" doc:name="HTTP Request Configuration"/>
+    <flow name="notificationid-main">
+        <http:listener config-ref="notificationid-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="notificationid-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="notificationid-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="notificationid-console">
+        <http:listener config-ref="notificationid-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="notificationid-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="put:/updatenotification:notificationid-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName=" notification_Id" value="#[payload. notification_Id]" doc:name="Variable"/>
+        <set-variable variableName="var" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{notification_Id}" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="notification_Id" value="#[flowVars.' notification_Id']"/>
+            </http:request-builder>
+        </http:request>
+
+        <set-payload value="{ &quot;header&quot; : {   &quot;guid&quot; : &quot;&quot;,   &quot;responseon&quot; : &quot;&quot;,   &quot;responsefrom&quot; : &quot;&quot;,   &quot;userid&quot; : &quot;&quot;,    &quot; notification_Id&quot; : #[flowVars. notification_Id]   },    &quot;message&quot; :&quot;update Successfull&quot; }" doc:name="Set Payload"/>
+    </flow>
+     <flow name="delete:/deletenotification:notificationid-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName=" notification_Id" value="#[message.inboundProperties.'http.query.params'.notification_Id]" doc:name="Variable"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{notification_Id}" method="DELETE" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="notification_Id" value="#[flowVars.' notification_Id']"/>
+            </http:request-builder>
+        </http:request>
+
+        <set-payload value="{ &quot;header&quot; : {   &quot;guid&quot; : &quot;&quot;,   &quot;responseon&quot; : &quot;&quot;,   &quot;responsefrom&quot; : &quot;&quot;,   &quot;userid&quot; : &quot;&quot;,    &quot; notification_Id&quot; : #[flowVars.notification_Id]   },   &quot;message&quot; :&quot;delated Successfull&quot;   }" doc:name="Set Payload"/>
+    </flow>
+    <flow name="get:/getnotificationFrom:notificationid-config">
+        <set-variable variableName="notificationFrom" value="#[message.inboundProperties.'http.query.params'.notificationFrom]" doc:name="Variable"/>
+        <set-payload value="{ &quot;query&quot; : {   &quot;bool&quot; : {  &quot;should&quot; : [   {&quot;match&quot; : { &quot;notificationFrom&quot; : &quot;#[flowVars.notificationFrom]&quot; }}        ]       }      }     } " doc:name="Set Payload"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/_search" method="POST" doc:name="HTTP"/>
+        <set-variable variableName="bodyData" value="#[[]]" doc:name="Variable"/>
+        <enricher source="#[(_source in payload.hits.hits)]" target="#[flowVars.bodyData]" doc:name="Message Enricher">
+            <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        </enricher>
+        <set-payload value="#[{ 'notification_Id' : flowVars.notificationFrom.notification_Id,'userid' : flowVars.notificationFrom.userid,'geolocation':flowVars.notificationFrom.geolocation,'notificationFrom':flowVars.notificationFrom,'responseOn' : server.dateTime.withTimeZone('GMT').format('MM/dd/yyyyHH:mm:ss')}]" doc:name="Set Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.bodyData !=[]]">
+                <set-variable variableName="payloadData" value="#[payload]" doc:name="Variable"/>
+                <logger message="#[flowVars.bodyData]" level="INFO" doc:name="Logger"/>
+                <expression-transformer expression="#[[{'header':flowVars.payloadData},{'body':flowVars.bodyData}]]" doc:name="Expression"/>
+                <json:object-to-json-transformer doc:name="Object to JSON"/>
+            </when>
+            <otherwise>
+                <set-payload value="bad request" doc:name="Set Payload"/>
+            </otherwise>
+        </choice>
+
+
+    </flow>
+    <flow name="get:/getnotifications:notificationid-config">
+        <set-variable variableName="notification_Id" value="#[message.inboundProperties.'http.query.params'.notification_Id]" doc:name="Variable"/>
+        <set-payload value="{  &quot;query&quot;: {   &quot;bool&quot;: {    &quot;must&quot;: {     &quot;match&quot;: {      &quot;notification_Id&quot;: &quot;#[flowVars.notification_Id]&quot;     }    }     }  } }       }      }     } " doc:name="Set Payload"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/_search" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="notification_Id" value="#[flowVars.notification_Id]"/>
+            </http:request-builder>
+        </http:request>
+        <set-variable variableName="bodyData" value="#[[]]" doc:name="Variable"/>
+        <enricher source="#[(_source in payload.hits.hits)]" target="#[flowVars.bodyData]" doc:name="Message Enricher">
+            <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        </enricher>
+        <set-payload value="#[{ 'notification_Id' : flowVars.notification_Id.notification_Id,'userid' : flowVars.notification_Id.userid,'geolocation':flowVars.notification_Id.geolocation,'notificationTo':flowVars.notification_Id.notificationTo,'responseOn' : server.dateTime.withTimeZone('GMT').format('MM/dd/yyyyHH:mm:ss')}]" doc:name="Set Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.bodyData !=[]]">
+                <set-variable variableName="payloadData" value="#[payload]" doc:name="Variable"/>
+                <logger message="#[flowVars.bodyData]" level="INFO" doc:name="Logger"/>
+                <expression-transformer expression="#[[{'header':flowVars.payloadData},{'body':flowVars.bodyData}]]" doc:name="Expression"/>
+                <json:object-to-json-transformer doc:name="Object to JSON"/>
+            </when>
+            <otherwise>
+                <set-payload value="bad request" doc:name="Set Payload"/>
+            </otherwise>
+        </choice>
+
+
+    </flow>
+    <flow name="get:/getnotificationTo:notificationid-config">
+        <set-variable variableName="notificationTo" value="#[message.inboundProperties.'http.query.params'.notificationTo]" doc:name="Variable"/>
+        <set-payload value="{  &quot;query&quot;: {   &quot;bool&quot;: {    &quot;should&quot;: {     &quot;match&quot;: {      &quot;notificationTo&quot;: &quot;#[flowVars.notificationTo]&quot;     }    }     }  } }       }      }     } " doc:name="Set Payload"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/_search" method="POST" doc:name="HTTP"/>
+        <set-variable variableName="bodyData" value="#[[]]" doc:name="Variable"/>
+        <enricher source="#[(_source in payload.hits.hits)]" target="#[flowVars.bodyData]" doc:name="Message Enricher">
+            <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        </enricher>
+        <set-payload value="#[{ 'notification_Id' : flowVars.notificationTo.notification_Id,'userid' : flowVars.notificationTo.userid,'geolocation':flowVars.notificationTo.geolocation,'notificationTo':flowVars.notificationTo,'responseOn' : server.dateTime.withTimeZone('GMT').format('MM/dd/yyyyHH:mm:ss')}]" doc:name="Set Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.bodyData !=[]]">
+                <set-variable variableName="payloadData" value="#[payload]" doc:name="Variable"/>
+                <logger message="#[flowVars.bodyData]" level="INFO" doc:name="Logger"/>
+                <expression-transformer expression="#[[{'header':flowVars.payloadData},{'body':flowVars.bodyData}]]" doc:name="Expression"/>
+                <json:object-to-json-transformer doc:name="Object to JSON"/>
+            </when>
+            <otherwise>
+                <set-payload value="bad request" doc:name="Set Payload"/>
+            </otherwise>
+        </choice>
+
+
+    </flow>
+     <flow name="post:/createnotification:notificationid-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="notification_Id" value="#[payload.notification_Id]" doc:name="Variable"/>
+        <set-variable variableName="var" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{notification_Id}" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="notification_Id" value="#[flowVars.notification_Id]"/>
+
+            </http:request-builder>
+        </http:request>
+        <set-payload value="[{
+		&quot;header&quot;: {
+			&quot;guid&quot;: &quot;#[flowVars.var.guid]&quot;,
+			&quot;responsedatetime&quot;: &quot; #[server.dateTime]&quot;,
+			&quot;userid&quot;: &quot;#[flowVars.var.userId]&quot;,
+			&quot;respondsOn&quot;: &quot;#[flowVars.var.requestedOn]&quot;,
+			&quot;responsesFrom&quot;: &quot;#[flowVars.var.requestedFrom]&quot;,
+			&quot;geoLocation&quot;: &quot;#[flowVars.var.geoLocation]&quot;
+		}
+
+
+	},
+
+
+
+	{
+		&quot;message&quot;: &quot;create Successfull&quot;
+	}
+]" doc:name="Set Payload"/>
+
+    </flow>
+    <apikit:mapping-exception-strategy name="notificationid-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+</mule>

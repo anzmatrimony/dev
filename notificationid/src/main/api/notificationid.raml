@@ -1,0 +1,241 @@
+#%RAML 0.8
+title: anz_user_notificatoin
+protocols: [http]
+/getnotifications:
+  get:
+    queryParameters:
+      guid:
+        displayName: guid
+        type: string
+      requestedon:
+        displayName: requestedon
+        type: date
+      requestedfrom:
+        displayName: requestedfrom
+        type: string
+      userid:
+        displayName: userid
+        type: string
+      responseon:
+       displayName: responseon
+       type : string
+      responsefrom:
+       displayName: responsefrom
+       type : string
+      geolocation:
+        displayName: geolocation
+        type: string
+    responses:
+              200:
+                body:
+                  application/json:
+                    example: |
+                     {"header": {
+                        "guid" : "",
+                        "notification_Id" : "",
+                        "notificationFrom" : "",
+                        "notificationTo" : "",
+                         "responseon" : "",
+                         "responsefrom" : "",
+                         "userid" : ""
+
+
+                         },
+                         "body": {
+                          "notification_Id" : "1234",
+                          "notificationFrom" : "1234",
+                          "notificationTo" : "1234",
+                          "notificationFor" : "1234",
+                          "notificationData" : "available",
+                         "createdOn" : "1-1-2017",
+                          "modifiedOn" : "1-1-2017",
+                           "status" : "waiting"
+                        }
+                        }
+/getnotificationTo:
+  get:
+    
+   
+    responses:
+            200:
+              body:
+                application/json:
+                  example: |
+                   {"header": {
+                   "guid" : "",
+                   "notification_Id" : "",
+                   "notificationFrom" : "",
+                   "notificationTo" : "",
+                    "responseon" : "",
+                    "responsefrom" : "",
+                    "userid" : ""
+
+
+                       },
+                       "body": {
+                        "notification_Id" : "1234",
+                        "notificationFrom" : "1234",
+                        "notificationTo" : "1234",
+                        "notificationFor" : "1234",
+                        "notificationData" : "available",
+                       "createdOn" : "1-1-2017",
+                        "modifiedOn" : "1-1-2017",
+                         "status" : "waiting"
+                      }
+                      }
+/getnotificationFrom:
+  get:
+   responses:
+            200:
+              body:
+                application/json:
+                  example: |
+                   {"header": {
+                   "guid" : "",
+                   "notification_Id" : "",
+                   "notificationFrom" : "",
+                   "notificationTo" : "",
+                    "responseon" : "",
+                    "responsefrom" : "",
+                    "userid" : ""
+
+
+                       },
+                       "body": {
+                        "notification_Id" : "1234",
+                        "notificationFrom" : "1234",
+                        "notificationTo" : "1234",
+                        "notificationFor" : "1234",
+                        "notificationData" : "available",
+                       "createdOn" : "1-1-2017",
+                        "modifiedOn" : "1-1-2017",
+                         "status" : "waiting"
+                      }
+                      }
+/updatenotification:
+  put:
+    body:
+      application/json:
+        example: |
+          {
+           "header" : {
+           "guid" : "",
+           "notification_Id" : "",
+           "notificationFrom" : "",
+           "notificationTo" : "",
+            "responseon" : "",
+            "responsefrom" : "",
+            "userid" : ""
+
+              },
+            "body": {
+                          "notification_Id" : "1234",
+                          "notificationFrom" : "1234",
+                          "notificationTo" : "1234",
+                          "notificationFor" : "1234",
+                          "notificationData" : "available",
+                         "createdOn" : "1-1-2017",
+                          "modifiedOn" : "1-1-2017",
+                           "status" : "waiting"
+            }
+            }
+    responses:
+      200:
+        body:
+          application/json:
+           example: |
+              {
+              "header" : {
+                "guid" : "",
+                 "responseon" : "",
+                 "responsefrom" : "",
+                 "userid" : ""
+                  "userref" : "1234"
+                 },
+                 "message" :"update Successfull"
+              }
+/createnotification:
+ post:
+    body:
+      application/json:
+       example: |
+         {
+         "header" : {
+         "guid" : "",
+         "notification_Id" : "",
+         "notificationFrom" : "",
+         "notificationTo" : "",
+          "responseon" : "",
+          "responsefrom" : "",
+          "userid" : ""
+
+
+           },
+         "body": {
+                          "notification_Id" : "1234",
+                          "notificationFrom" : "1234",
+                          "notificationTo" : "1234",
+                          "notificationFor" : "1234",
+                          "notificationData" : "available",
+                         "createdOn" : "1-1-2017",
+                          "modifiedOn" : "1-1-2017",
+                           "status" : "waiting"
+             }
+         }
+    responses:
+     200:
+       body: 
+         application/json:
+           example: |
+               {
+                  "header" : {
+                  "guid" : "",
+                  "responseon" : "",
+                  "responsefrom" : "",
+                      "userid" : ""
+                       "userref" : "1234"
+                      },
+                      "message" :"create Successfull"
+                    }
+   
+/deletenotification:
+    delete:
+      body:
+        application/json:
+         example: |
+           {
+           "header" : {
+           "guid" : "",
+           "notification_Id" : "",
+           "notificationFrom" : "",
+           "notificationTo" : "",
+            "responseon" : "",
+            "responsefrom" : "",
+            "userid" : ""
+
+             },
+              "body": {
+                          "notification_Id" : "1234",
+                          "notificationFrom" : "1234",
+                          "notificationTo" : "1234",
+                          "notificationFor" : "1234",
+                          "notificationData" : "available",
+                         "createdOn" : "1-1-2017",
+                          "modifiedOn" : "1-1-2017",
+                           "status" : "waiting"
+               }
+           }
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+               {"header" : {
+                 "guid" : "",
+                 "responseon" : "",
+                 "responsefrom" : "",
+                 "userid" : "",
+                  "userref" : "1234"
+                  },
+                 "message" :"delated Successfull"
+                 }
