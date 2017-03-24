@@ -1,0 +1,181 @@
+#%RAML 1.0
+title: anz_userprivacySettings
+protocols: HTTP
+/getprivacy:
+  get:
+    queryParameters:
+      guid:
+        displayName: guid
+        type: string
+      userId:
+        type: string
+      requestedfrom:
+        type: string
+      requestedon:
+        type: string
+      geolocation:
+        type: string
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+              "header":{
+                "guid":"23",
+                 "responsedatetime":"22",
+                 "userid" :"32",
+                  "responsesdOn":"33",
+                  "responsesFrom":"22",
+                  "geoLocation":"36"
+                 },
+                 "body":{
+                   "user_ref":"123",
+                   "mobile_phone" : "123456",
+                   "home_phone" : "NULL",
+                    "fb_id" : "hyd",
+                     "twitter_id" : "@sure",
+                     "linkedin_id" : "syrn.linkedin",
+                     "income":"25555",
+                       "visitorsSetting":"raj",
+                       "createdOn":"1566",
+                        "modifiedOn":"1233",
+                       "createdBy":"suren",
+                         "modifiedBy":"surre"
+                 }
+               }
+/createprivacysettings:
+  post:
+    body:
+      application/json:
+        example: |
+         {
+          "header":{
+            "guid":"",
+             "requestdatetime":"",
+             "userid" :"",
+              "requestedOn":"",
+              "requestedFrom":"",
+              "geoLocation":""
+             },
+             "body":{
+               "user_ref":"121",
+               "mobile_phone" : "123456",
+               "home_phone" : "NULL",
+                "fb_id" : "hyd",
+                 "twitter_id" : "@sure",
+                 "linkedin_id" : "syrn.linkedin",
+                 "income":"25555",
+                   "visitorsSetting":"raj",
+                   "createdOn":"1566",
+                    "modifiedOn":"1233",
+                   "createdBy":"suren",
+                     "modifiedBy":"surre"
+             }
+           }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+             {
+             "header":{
+               "guid":"",
+                "responsedatetime":"",
+                "userid" :"",
+                 "responsesOn":"",
+                 "responsesFrom":""
+
+                }
+             {"message":"successfully record created"}
+             }
+/updateprivacy:
+ put:
+   body:
+     application/json:
+       example: |
+        {
+        "header":{
+          "guid":"",
+           "requestdatetime":"",
+           "userid" :"",
+           "requestedOn":"",
+           "requestedFrom":"",
+           "geoLocation":""
+           },
+           "body":{
+             "user_ref":"121",
+             "mobile_phone" : "123456",
+             "home_phone" : "NULL",
+              "fb_id" : "hyd",
+               "twitter_id" : "@sure",
+               "linkedin_id" : "syrn.linkedin",
+               "income":"25555",
+               "visitorsSetting":"raj",
+               "createdOn":"1566",
+                "modifiedOn":"1233",
+               "createdBy":"suren",
+                 "modifiedBy":"surre"
+             }
+           }
+   responses:
+      200:
+        body:
+          application/json:
+            example: |
+             {
+             "header":{
+               "guid":"",
+                "reesponsedatetime":"",
+                "userid" :"",
+                 "responsesOn":"",
+                 "responsesFrom":""
+                }
+             {"message":"successfully updated"}
+             }
+/deleteprivacy:
+  delete:
+   body:
+     application/json:
+       example: |
+         {
+         "header":
+           {
+           "guid":"",
+            "requestdatetime":"",
+            "userid" :"",
+            "requestedOn":"",
+            "requestedFrom":"",
+            "geoLocation":""
+            },
+            "body":
+          {
+          "user_ref":"121",
+         "mobile_phone" : "123456",
+         "home_phone" : "NULL",
+          "fb_id" : "hyd",
+           "twitter_id" : "@sure",
+           "linkedin_id" : "syrn.linkedin",
+           "income":"25555",
+           "visitorsSetting":"raj",
+           "createdOn":"1566",
+            "modifiedOn":"1233",
+           "createdBy":"suren",
+             "modifiedBy":"surre"
+         }
+         }
+   responses:
+      201:
+        body:
+          application/json:
+            example: |
+              {
+              "header":{
+                "guid":"",
+                 "responsedatetime":"",
+                 "userid" :"",
+                  "responsesOn":"",
+                  "responsesFrom":""
+                 }
+              {"message":"successfully deleted"}
+              }
