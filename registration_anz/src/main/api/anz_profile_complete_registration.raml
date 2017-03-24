@@ -1,0 +1,147 @@
+#%RAML 0.8
+title: ANZ_User_Operations
+protocols: [http]
+/UpdateProfile:
+  put:
+    body:
+      application/json:
+        example: |
+          {
+           "header":{
+            "guid":"",
+            "requestedOn":"",
+            "requestedFrom" :"",
+            "userid" : "",
+            "geoLocation": ""
+              },
+              "body":{
+            "user_ref" : "123456",
+            "user_ID" : "123456",
+            "profile_for" : "123456",
+            "email_id" : "123456",
+            "first_name" : "123456",
+            "last_name" : "123456",
+            "gender" : "123456",
+            "dob" : "123456",
+            "height" : "123456",
+            "weight" : "123456",
+            "body_type" : "123456",
+            "diet" : "123456",
+            "drink" : "123456",
+            "smoke" : "123456",
+            "marital_status" : "123456",
+            "religion" : "123456",
+            "community" : "123456",
+            "sub_community" : "123456",
+            "fb_id" : "123456",
+            "twitter_id" : "123456",
+            "linkedin_id" : "123456",
+            "home_phone" : "123456",
+            "mobile_phone" : "123456",
+            "mother_tongue" : "123456",
+            "education_level" : "123456",
+            "working_organization" : "123456",
+            "designation" : "123456",
+            "income" : "123456",
+            "country" : "123456",
+            "state" : "123456",
+            "city" : "123456",
+            "express" : "123456",
+            "profile_type" : "123456",
+            "createdOn"  : "12-07-2017",
+            "createdBy" : "Father",
+            "modifiedOn" : "13-07-2017",
+            "modifiedBy":"user_name",
+            "ef1" : "Extra Fields",
+            "ef2":"Extra Fields",
+            "ef3" : "Extra Fields"
+            }
+            }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+               "header":{
+                "guid":"",
+                "responseOn":"",
+                "responseFrom" :"",
+                "userid" : ""
+                  },
+                  "body":{
+                    "message":"Updated Successfully"
+                    }
+                }
+/createProfile:
+  post:
+     body:
+      application/json:
+        example: |
+          {
+           "header":
+             {
+            "guid":"",
+            "requestedOn":"",
+            "requestedFrom" :"",
+            "userid" : "",
+            "geoLocation":""
+             },
+              "body":{
+            "user_ref" : "123456",
+            "user_ID" : "123456",
+            "profile_for" : "123456",
+            "email_id" : "123456",
+            "first_name" : "123456",
+            "last_name" : "123456",
+            "gender" : "123456",
+            "dob" : "123456",
+            "height" : "123456",
+            "weight" : "123456",
+            "body_type" : "123456",
+            "diet" : "123456",
+            "drink" : "123456",
+            "smoke" : "123456",
+            "marital_status" : "123456",
+            "religion" : "123456",
+            "community" : "123456",
+            "sub_community" : "123456",
+            "fb_id" : "123456",
+            "twitter_id" : "123456",
+            "linkedin_id" : "123456",
+            "home_phone" : "123456",
+            "mobile_phone" : "123456",
+            "mother_tongue" : "123456",
+            "education_level" : "123456",
+            "working_organization" : "123456",
+            "designation" : "123456",
+            "income" : "123456",
+            "country" : "123456",
+            "state" : "123456",
+            "city" : "123456",
+            "express" : "123456",
+            "profile_type" : "123456",
+            "createdOn"  : "12-07-2017",
+            "createdBy" : "Father",
+            "modifiedOn" : "13-07-2017",
+            "modifiedBy":"user_name",
+            "ef1" : "Extra Fields",
+            "ef2":"Extra Fields",
+            "ef3" : "Extra Fields"
+            }
+            }
+     responses:
+      201:
+        body:
+          application/json:
+            example: |
+             {
+              "header":{
+                "guid":"",
+                "responseOn":"",
+                "responseFrom" :"",
+                "userid" : ""
+                  },
+                "body":{
+                  "message" :"Successfully Created profile"
+               }}

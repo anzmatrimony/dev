@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:listener-config name="anz_profile_complete_registration-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="anz_profile_complete_registration-config" raml="anz_profile_complete_registration.raml" consoleEnabled="false" doc:name="Router"/>
+    <db:mysql-config name="MySQL_Configuration" host="192.168.0.115" port="3306" user="anz_user" password="User@123" database="anz_user_schema" doc:name="MySQL Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="/anz_user/user_info/{user_ref}" doc:name="HTTP Request Configuration"/>
+    <flow name="anz_profile_complete_registration-main">
+        <http:listener config-ref="anz_profile_complete_registration-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="anz_profile_complete_registration-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="anz_profile_complete_registration-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="anz_profile_complete_registration-console">
+        <http:listener config-ref="anz_profile_complete_registration-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="anz_profile_complete_registration-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="put:/UpdateProfile:anz_profile_complete_registration-config">
+        <json:json-to-object-transformer doc:name="JSON to Object" returnClass="java.lang.Object"/>
+        <set-variable variableName="user" value="#[payload]" doc:name="Variable"/>
+        <flow-ref name="DB_put_flow" doc:name="DB_put_flow"/>
+        <choice doc:name="Choice">
+            <when expression="#[sessionVars.dbSess=='success']">
+                <set-payload value="#[flowVars.user]" doc:name="Payload"/>
+                <flow-ref name="ES_put_flow" doc:name="ES_put_flow"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+        <set-payload value="{&#xA; &quot;header&quot;:{&#xA;  &quot;guid&quot;:&quot;&quot;,&#xA;  &quot;responseOn&quot;:&quot;&quot;,&#xA;  &quot;responseFrom&quot; :&quot;&quot;,&#xA;  &quot;userid&quot; : &quot;&quot;&#xA;    },&#xA;    &quot;body&quot;:{&#xA;      &quot;message&quot;:&quot;Updated Successfully&quot;&#xA;      }&#xA;  }" doc:name="Set Payload"/>
+    </flow>
+    <sub-flow name="DB_put_flow">
+        <db:update config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[UPDATE `anz_user_schema`.`USERINFO` SET `user_ID`='#[payload.user_ID]', `profile_for`='#[payload.profile_for]', `email_id`='#[payload.email_id]', `first_name`='#[payload.first_name]', `last_name`='#[payload.last_name]', `gender`='#[payload.gender]', `dob`='#[payload.dob]', `height`='#[payload.height]', `weight`='#[payload.weight]', `body_type`='#[payload.body_type]', `diet`='#[payload.diet]', `drink`='#[payload.drink]', `smoke`='#[payload.smoke]', `marital_status`='#[payload.marital_status]', `religion`='#[payload.religion]', `community`='#[payload.community]', `sub_community`='#[payload.sub_community]', `fb_id`='#[payload.fb_id]', `twitter_id`='#[payload.twitter_id]', `linkedin_id`='#[payload.linkedin_id]', `home_phone`='#[payload.home-phone]', `mobile_phone`='#[payload.mobile_phone]', `education_level`='#[payload.education_level]', `working_organization`='#[payload.working_organization]', `designation`='#[payload.designation]', `income`='#[payload.income]', `country`='#[payload.country]', `state`='#[payload.state]', `city`='#[payload.city]', `express`='#[payload.express]', `profile_type`='#[payload.profile_type]', `createdOn`='#[payload.createdOn]', `createdBy`='#[payload.createdBy]', `modifiedOn`='#[payload.modifiedOn]', `modifiedBy`='#[payload.modifiedBy]', `ef1`='#[payload.ef1]', `ef2`='#[payload.ef2]', `ef3`='#[payload.ef3]' WHERE `user_ref`='#[flowVars.user]' and`user_ID`='#[flowVars.user]';]]></db:parameterized-query>
+        </db:update>
+        <set-session-variable variableName="dbSess" value="success" doc:name="Session Variable"/>
+    </sub-flow>
+    <sub-flow name="ES_put_flow">
+        <set-variable variableName="user_ref" value="#[payload.user_ref]" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user_ref" value="#[flowVars.user_ref]"/>
+            </http:request-builder>
+        </http:request>
+    </sub-flow>
+    <flow name="post:/createProfile:anz_profile_complete_registration-config">
+	    
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="postinput" value="#[payload]" doc:name="Variable"/>
+        <flow-ref name="postDB" doc:name="postDB"/>
+        <choice doc:name="Choice">
+            <when expression="#[sessionVars.dbSess=='success']">
+                <set-payload value="#[flowVars.postinput]" doc:name="Set Payload"/>
+                <flow-ref name="esFlow" doc:name="esFlow"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+        <logger message="{successfull completed}" level="INFO" doc:name="Logger"/>
+    </flow>
+    <sub-flow name="postDB">
+       <db:insert config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[INSERT INTO USERINFO (user_ref, user_ID, profile_for, email_id, first_name, last_name, gender, dob, height, weight, body_type, diet, drink, smoke, marital_status, religion, community, sub_community, fb_id, twitter_id, linkedin_id, home_phone, mobile_phone, mother_tongue, education_level, working_organization, designation, income, country, state) VALUES (#[payload.user_ref], #[payload.user_ID], #[payload.profile_for], #[payload.email_id], #[payload.first_name], #[payload.last_name], #[payload.gender], #[payload.dob], #[payload.height], #[payload.weight], #[payload.body_type], #[payload.diet], #[payload.drink], #[payload.smoke], #[payload.marital_status], #[payload.religion], #[payload.community], #[payload.sub_community], #[payload.fb_id], #[payload.twitter_id], #[payload.linkedin_id], #[payload.home_phone], #[payload.mobile_phone], #[payload.mother_tongue], #[payload.education_level], #[payload.working_organization], #[payload.designation], #[payload.income], #[payload.country], #[payload.state]);]]></db:parameterized-query>
+        </db:insert>
+        <set-session-variable variableName="dbSess" value="success" doc:name="Session Variable"/>
+
+    </sub-flow>
+    
+    <sub-flow name="esFlow">
+      <set-variable variableName="user_ref" value="#[payload.user_ref]" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user_ref" value="#[flowVars.user_ref]"/>
+
+            </http:request-builder>
+        </http:request>    </sub-flow>
+    
+    
+    <apikit:mapping-exception-strategy name="anz_profile_complete_registration-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+</mule>
