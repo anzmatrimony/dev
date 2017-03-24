@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:listener-config name="profile_matches-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="profile_matches-config" raml="profile_matches.raml" consoleEnabled="false" doc:name="Router"/>
+    <db:mysql-config name="MySQL_Configuration" host="192.168.0.115" port="3306" user="anz_user" password="User@123" database="anz_user_schema" doc:name="MySQL Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="anz_user/user_info" doc:name="HTTP Request Configuration"/>
+
+    <flow name="profile_matches-main">
+        <http:listener config-ref="profile_matches-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="profile_matches-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="profile_matches-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="profile_matches-console">
+        <http:listener config-ref="profile_matches-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="profile_matches-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="get:/matchProfiles:profile_matches-config" >
+        <flow-ref name="GetProfilesFromElastic" doc:name="GetProfilesFromElastic"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.mySource  == []]">
+                <db:select config-ref="MySQL_Configuration" doc:name="Database">
+                    <db:parameterized-query><![CDATA[SELECT * FROM USERINFO
+WHERE marital_status = 'never married' AND religion = 'hindu' AND 
+mother_tongue = 'telugu' AND  diet = 'veg' AND drink = 'no' AND
+smoke = 'no' AND country = 'India' AND state =  'andhra pradesh' AND 
+education_level = 'B.Tech' AND community = 'brahmin';]]></db:parameterized-query>
+                </db:select>
+                <json:object-to-json-transformer doc:name="Object to JSON"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+
+    </flow>
+    
+    
+ <flow name="GetProfilesFromElastic">
+
+       <set-variable variableName="match" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <set-payload value="{  &quot;query&quot;: {   &quot;bool&quot;: {    &quot;should&quot;: [{     &quot;match&quot;: {      &quot;diet&quot;: &quot;#[flowVars.match.diet]&quot;     }    }, {     &quot;match&quot;: {      &quot;religion&quot;: &quot;#[flowVars.match.religion]&quot;     }    }, {     &quot;match&quot;: {      &quot;community&quot;: &quot;#[flowVars.match.community]&quot;     }    }, {     &quot;match&quot;: {      &quot;drink&quot;: &quot;#[flowVars.match.drink]&quot;     }    }]   }  },  &quot;_source&quot;: [&quot;user_ref&quot;, &quot;first_name&quot;, &quot;last_name&quot;, &quot;weight&quot;, &quot;height&quot;, &quot;marital_status&quot;, &quot;religion&quot;, &quot;community&quot;, &quot;sub_community&quot;, &quot;mother_tongue&quot;, &quot;education_level&quot;,   &quot;country&quot;, &quot;state&quot;, &quot;city&quot;, &quot;working_organization&quot;, &quot;designation&quot;  ] }" doc:name="Set Payload"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/_search" method="POST" doc:name="HTTP"/>
+        <set-variable variableName="mySource" value="#[[]]" doc:name="Variable"/>
+        <enricher source="#[(_source in payload.hits.hits)]" target="#[flowVars.mySource]" doc:name="Message Enricher">
+            <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        </enricher>
+        <set-payload value=" {
+ 	&quot;guid&quot;: &quot;#[flowVars.match.guid]&quot;,
+ 	&quot;responsedatetime&quot;: &quot;#[server.dateTime.format('MM/dd/yyyy,HH:mm:ss')]&quot;,
+ 	&quot;responsefrom&quot;: &quot;#[flowVars.match.responsefrom]&quot;,
+ 	&quot;geoLocation&quot;: &quot;#[flowVars.match.geoLocation]&quot;
+ }" doc:name="Set Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="payloadData" value="#[payload]" doc:name="Variable"/>
+        <expression-transformer mimeType="application/json" expression="#[[  {'header': flowVars.payloadData},{  'body': flowVars.mySource} ]]" doc:name="Expression"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+
+
+   </flow>
+    
+    <apikit:mapping-exception-strategy name="profile_matches-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    
+    
+     
+    
+</mule>

@@ -1,0 +1,150 @@
+#%RAML 0.8
+title: profile_matches
+version: 1.0
+protocols: [HTTP]
+/matchProfiles:
+  get:
+    queryParameters:
+      age:
+        displayName: age
+        type: string
+      height:
+        displayName: height
+        type: string
+      marital_status:
+        displayName: marital_status
+        type: string
+      physical_status:
+        displayName: physical_status
+        type: string
+      religion:
+        displayName: religion
+        type: string
+      community:
+        displayName: community
+        type: string
+      kuja_dosham:
+        displayName: kuja_dosham
+        type: string
+      mother_tounge:
+        displayName: mother_tounge
+        type: string
+      diet:
+        displayName: diet
+        type: string
+      drink:
+        displayName: drink
+        type: string
+      smoke:
+        displayName: smoke
+        type: string
+      country_living_in:
+        displayName: country_living_in
+        type: string
+      state_living_in:
+        displayName: state_living_in
+        type: string
+      education:
+        displayName: education
+        type: string
+      occupation:
+        displayName: occupation
+        type: string
+      profile_created_by:
+        displayName: profile_created_by
+        type: string
+      responsefrom:
+        displayName: responseform
+        type: string
+      responsedatetime: 
+        displayName: responsedatetime
+        type: string
+      guid:
+        displayName: giud
+        type: string
+      geolocation:
+        displayName: geolocation
+        type: string
+          
+
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+             {"header":{
+                        "guid":"",
+                        "responsedatetime":"",
+                        "responsefrom" :"",
+                        "geolocation":""
+                        },
+              "body":[{
+                        "user_ref": "00150",
+                        "user_ID": "00150",
+                        "profile_for": "myself",
+                        "email_id": "hemanth@gmail.com",
+                        "first_name": "hemanth8",
+                        "last_name": "k",
+                        "gender": "male",
+                        "dob": "28-12-1993",
+                        "height": "165",
+                        "weight": "64",
+                        "body_type": "slim",
+                        "diet": "veg",
+                        "drink": "no",
+                        "smoke": "no",
+                        "marital_status": "never married",
+                        "religion": "hindu",
+                        "community": "vysya",
+                        "sub_community": "NA",
+                        "fb_id": "hemanth@facebook.com",
+                        "twitter_id": "hemanth",
+                        "linkedin_id": "hemanth",
+                        "home_phone": "909057690",
+                        "mobile_phone": "08945979796",
+                        "mother_tongue": "telugu",
+                        "education_level": "B.Tech",
+                        "working_organization": "ibm",
+                        "designation": "developer",
+                        "income": "33000",
+                        "country": "India",
+                        "state": "andhra pradesh",
+                        "city": "Eluru",
+                        "express": "interest",
+                        "profile_type": "platinum"
+                      },{
+                        "user_ref": "00148",
+                        "user_ID": "00148",
+                        "profile_for": "myself",
+                        "email_id": "ravi148@gmail.com",
+                        "first_name": "ravi8",
+                        "last_name": "k",
+                        "gender": "male",
+                        "dob": "28-12-1993",
+                        "height": "165",
+                        "weight": "64",
+                        "body_type": "slim",
+                        "diet": "veg",
+                        "drink": "no",
+                        "smoke": "no",
+                        "marital_status": "never married",
+                        "religion": "hindu",
+                        "community": "vysya",
+                        "sub_community": "NA",
+                        "fb_id": "ravi@facebook.com",
+                        "twitter_id": "ravi",
+                        "linkedin_id": "ravi",
+                        "home_phone": "909057690",
+                        "mobile_phone": "08945979796",
+                        "mother_tongue": "telugu",
+                        "education_level": "B.Tech",
+                        "working_organization": "ibm",
+                        "designation": "developer",
+                        "income": "33000",
+                        "country": "India",
+                        "state": "andhra pradesh",
+                        "city": "Eluru",
+                        "express": "interest",
+                        "profile_type": "platinum"
+                      }]
+                    }
