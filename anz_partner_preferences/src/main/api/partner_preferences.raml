@@ -1,0 +1,144 @@
+#%RAML 0.8
+title: anz_profile_partner_preference
+version: 1.0
+protocols: [https]
+/create_preferences:
+  post:
+    queryParameters:
+      guid:
+        displayName: guid
+        type: string
+      requestdatetime:
+        type: string
+      requestform:
+        type: string
+      responseon:
+        type: string
+      responseform:
+        type: string
+      userId:
+        type: string
+      limit:
+        type: string
+      createOn:
+        type: string
+      createdBy:
+        type: string
+      modifiedOn:
+        type: string
+      moidifiedBy:
+        type: string
+      geolocation:
+        type: string
+    responses:
+      200:
+        body:
+          appliction/json:
+            example: |
+              {
+                "header":
+                  {
+                   "guid":"",
+                   "responsedatetime":"",
+                   "requestform":"",
+                   "userid" :"",
+                   "createOn" :"",
+                   "createdBy" :"",
+                   "geolocation":""
+                   },
+
+                 "body":
+                   {
+                     "user_ref" : "0001",
+                     "age" : "24",
+              	     "height" : "159",
+              	     "marital_status" : "never married",
+              	     "physical_status" : " normal",
+              	     "religion" :  "hindu",
+                  	 "caste" : "vysya",
+                  	 "kuja_dosham" : "no",
+                  	 "mother_tounge" : "telugu",
+                  	 "diet" : "veg",
+                  	 "drink" :  "no",
+                  	 "smoke" : "no",
+                  	 "country_living_in "  : "india",
+                  	 "state_living_in" : "andhra pradesh",
+                  	 "education" : "b.tech",
+                  	 "occupation" : "private employee",
+                  	 "profile_created_by" : "self"
+                   }
+                 }
+              responses:
+                200:
+                  body:
+                    application/json:
+                      example: |
+                      {
+                        "header":
+                          {"guid":"",
+                           "responsedatetime":"",
+                           "responseon":"",
+                           "responseform":"",
+                           "userid" :"",
+                           },
+                           {
+                            "result":"preferences sucessfully added"
+                          }
+                        }
+/update_preferences:
+  put:
+    responses:
+      200:
+        body:
+          application/json:
+              example: |
+                { "header":
+                  {
+                     "guid":"",
+                     "responsedatetime":"",
+                     "requestform":"",
+                     "userid" :"",
+                     "modifiedOn" :"",
+                     "moidifiedBy":"",
+                     "geolocation":""
+                  },
+
+                  "body":
+                    {
+                      "user_ref" : "0001",
+                      "age" : "24",
+                      "height" : "159",
+                      "marital_status" : "never married",
+                      "physical_status" : " normal",
+                      "religion" :  "hindu",
+                      "caste" : "vysya",
+                      "kuja_dosham" : "no",
+                      "mother_tounge" : "telugu",
+                      "diet" : "veg",
+                      "drink" :  "no",
+                      "smoke" : "no",
+                      "country_living_in "  : "india",
+                      "state_living_in" : "andhra pradesh",
+                      "education" : "b.tech",
+                      "occupation" : "private employee",
+                      "profile_created_by" : "self"
+                      }
+                    }
+                responses:
+                  200:
+                    body:
+                      application/json:
+                          example: |
+                            {
+                              "header":
+                              {
+                                "guid":"",
+                                "responsedatetime":"",
+                                "responseon":"",
+                                "responseform":"",
+                                "userid" :"",
+                               },
+                              {
+                                "result":"preferences sucessfully updated"
+                              }
+                            }

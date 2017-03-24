@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:listener-config name="partner_preferences-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="partner_preferences-config" raml="partner_preferences.raml" consoleEnabled="false" doc:name="Router"/>
+    <db:mysql-config name="MySQL_Configuration" host="192.168.0.115" port="3306" user="anz_user" password="User@123" database="anz_user_schema" doc:name="MySQL Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="anz_user/partner_preference" doc:name="HTTP Request Configuration"/>
+    <flow name="partner_preferences-main">
+        <http:listener config-ref="partner_preferences-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="partner_preferences-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="partner_preferences-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="partner_preferences-console">
+        <http:listener config-ref="partner_preferences-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="partner_preferences-config" doc:name="APIkit Console"/>
+    </flow>
+
+    <apikit:mapping-exception-strategy name="partner_preferences-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    <flow name="put:/update_preferences:partner_preferences-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-session-variable variableName="mysession" value="#[message.payload]" doc:name="Session Variable"/>
+        <db:update config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[UPDATE anz_user_schema.partner_preference SET user_ref=#[payload.user_ref], age=#[payload.age],height=#[payload.height],
+marital_status=#[payload.marital_status], physical_status=#[payload.physical_status],religion=#[payload.religion], caste=#[payload.caste], kuja_dosham=#[payload.kuja_dosham], mother_tounge=#[payload.mother_tounge], diet=#[payload.diet], drink=#[payload.drink], smoke=#[payload.smoke], country_living_in=#[payload.country_living_in], state_living_in=#[payload.state_living_in], education=#[payload.education], occupation=#[payload.occupation], profile_created_by=#[payload.profile_created_by] 
+WHERE user_ref=#[payload.user_ref];]]></db:parameterized-query>
+        </db:update>
+        <set-payload value="{ &quot;header&quot;:
+  {
+     &quot;guid&quot;:&quot;&quot;,
+     &quot;responsedatetime&quot;:&quot;&quot;,
+     &quot;requestform&quot;:&quot;&quot;,
+     &quot;userid&quot; :&quot;&quot;,
+     &quot;modifiedOn&quot; :&quot;&quot;,
+     &quot;moidifiedBy&quot;:&quot;&quot;,
+     &quot;geolocation&quot;:&quot;&quot;
+  },
+
+  &quot;body&quot;:
+    {
+      &quot;user_ref&quot; : &quot;0001&quot;,
+      &quot;age&quot; : &quot;24&quot;,
+      &quot;height&quot; : &quot;159&quot;,
+      &quot;marital_status&quot; : &quot;never married&quot;,
+      &quot;physical_status&quot; : &quot; normal&quot;,
+      &quot;religion&quot; :  &quot;hindu&quot;,
+      &quot;caste&quot; : &quot;vysya&quot;,
+      &quot;kuja_dosham&quot; : &quot;no&quot;,
+      &quot;mother_tounge&quot; : &quot;telugu&quot;,
+      &quot;diet&quot; : &quot;veg&quot;,
+      &quot;drink&quot; :  &quot;no&quot;,
+      &quot;smoke&quot; : &quot;no&quot;,
+      &quot;country_living_in &quot;  : &quot;india&quot;,
+      &quot;state_living_in&quot; : &quot;andhra pradesh&quot;,
+      &quot;education&quot; : &quot;b.tech&quot;,
+      &quot;occupation&quot; : &quot;private employee&quot;,
+      &quot;profile_created_by&quot; : &quot;self&quot;
+      }
+    }
+responses:
+  200:
+    body:
+      application/json:
+          example: |
+            {
+              &quot;header&quot;:
+              {
+                &quot;guid&quot;:&quot;&quot;,
+                &quot;responsedatetime&quot;:&quot;&quot;,
+                &quot;responseon&quot;:&quot;&quot;,
+                &quot;responseform&quot;:&quot;&quot;,
+                &quot;userid&quot; :&quot;&quot;,
+               },
+              {
+                &quot;result&quot;:&quot;preferences sucessfully updated&quot;
+              }
+            }" doc:name="Set Payload"/>
+        <choice doc:name="Choice">
+            <when expression="#[sessionVars.mysession]">
+                <flow-ref name="partner_preferencesFlowForElasticUPDATE" doc:name="partner_preferencesFlowForElasticUPDATE"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="partner_preferencesFlowForElasticUPDATE">
+        <set-payload value="#[sessionVars.mysession]" doc:name="Set Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="user_ref" value="#[payload.user_ref]" doc:name="Variable"/>
+        <set-variable variableName="partner" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{user_ref}" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user_ref" value="#[flowVars.user_ref]"/>
+            </http:request-builder>
+        </http:request>
+        <set-payload value="[{  &quot;guid&quot;: &quot;#[flowVars.partner.guid]&quot;,                 
+		&quot;responsedatetime&quot;:&quot;#[server.DateTime]&quot;,                 
+		 &quot;responseon&quot;:&quot;#[flowVars.partner.responseon]&quot;,                 	
+		&quot;responseform&quot;:&quot;#[flowVars.partner.responseform]&quot;,                 	
+		&quot;modifiedon&quot; :&quot;#[flowVars.partner.modifiedon]&quot;,
+		&quot;modifiedby&quot;: &quot;#[flowVars.partner.modifiedby]&quot;,
+		&quot;geoloction&quot;:&quot;#[flowVars.partner.geoloction] &quot;}
+		
+	,{
+	&quot;result&quot; : &quot;partner prferences updated sucessfully&quot;}]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="post:/create_preferences:partner_preferences-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-session-variable variableName="mysession" value="#[message.payload]" doc:name="Session Variable"/>
+        <db:insert config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[INSERT INTO anz_user_schema.partner_preference (user_ref, age, height,marital_status, physical_status, religion, caste, kuja_dosham, mother_tounge, diet, drink, smoke, country_living_in, state_living_in, education, occupation, profile_created_by) VALUES (#[payload.user_ref],#[payload.age],#[payload.height],
+#[payload.marital_status],#[payload.physical_status],#[payload.religion],
+#[payload.caste],#[payload.kuja_dosham],#[payload.mother_tounge],
+#[payload.diet],#[payload.drink],#[payload.smoke],
+#[payload.country_living_in],#[payload.state_living_in],
+#[payload.education],#[payload.occupation],#[payload.profile_created_by]);]]></db:parameterized-query>
+        </db:insert>
+        <set-payload value="{
+  &quot;header&quot;:
+    {
+     &quot;guid&quot;:&quot;&quot;,
+     &quot;responsedatetime&quot;:&quot;&quot;,
+     &quot;requestform&quot;:&quot;&quot;,
+     &quot;userid&quot; :&quot;&quot;,
+     &quot;createOn&quot; :&quot;&quot;,
+     &quot;createdBy&quot; :&quot;&quot;,
+     &quot;geolocation&quot;:&quot;&quot;
+     },
+
+   &quot;body&quot;:
+     {
+       &quot;user_ref&quot; : &quot;0001&quot;,
+       &quot;age&quot; : &quot;24&quot;,
+	     &quot;height&quot; : &quot;159&quot;,
+	     &quot;marital_status&quot; : &quot;never married&quot;,
+	     &quot;physical_status&quot; : &quot; normal&quot;,
+	     &quot;religion&quot; :  &quot;hindu&quot;,
+    	 &quot;caste&quot; : &quot;vysya&quot;,
+    	 &quot;kuja_dosham&quot; : &quot;no&quot;,
+    	 &quot;mother_tounge&quot; : &quot;telugu&quot;,
+    	 &quot;diet&quot; : &quot;veg&quot;,
+    	 &quot;drink&quot; :  &quot;no&quot;,
+    	 &quot;smoke&quot; : &quot;no&quot;,
+    	 &quot;country_living_in &quot;  : &quot;india&quot;,
+    	 &quot;state_living_in&quot; : &quot;andhra pradesh&quot;,
+    	 &quot;education&quot; : &quot;b.tech&quot;,
+    	 &quot;occupation&quot; : &quot;private employee&quot;,
+    	 &quot;profile_created_by&quot; : &quot;self&quot;
+     }
+   }
+responses:
+  200:
+    body:
+      application/json:
+        example: |
+        {
+          &quot;header&quot;:
+            {&quot;guid&quot;:&quot;&quot;,
+             &quot;responsedatetime&quot;:&quot;&quot;,
+             &quot;responseon&quot;:&quot;&quot;,
+             &quot;responseform&quot;:&quot;&quot;,
+             &quot;userid&quot; :&quot;&quot;,
+             },
+             {
+              &quot;result&quot;:&quot;preferences sucessfully added&quot;
+            }
+          }" doc:name="Set Payload"/>
+        <choice doc:name="Choice">
+            <when expression="#[sessionVars.mysession]">
+                <flow-ref name="partner_preferencesFlowForElasticCREATE" doc:name="partner_preferencesFlowForElasticCREATE"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="partner_preferencesFlowForElasticCREATE">
+        <set-payload value="#[sessionVars.mysession]" doc:name="Set Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="user_ref" value="#[payload.user_ref]" doc:name="Variable"/>
+        <set-variable variableName="postdata" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{user_ref}" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user_ref" value="#[flowVars.user_ref]"/>
+            </http:request-builder>
+        </http:request>
+        <set-payload value="[{
+	&quot;header&quot;: {
+		 &quot;guid&quot;: &quot;#[flowVars.postdata.guid]&quot;,                 
+		&quot;responsedatetime&quot;:&quot;#[server.DateTime]&quot;,                 
+		 &quot;responseon&quot;:&quot;#[flowVars.postdata.responseon]&quot;,                 	
+		&quot;responseform&quot;:&quot;#[flowVars.postdata.responseform]&quot;,                 	
+		&quot;createdon&quot; :&quot;#[flowVars.postdata.createdon]&quot;,
+		&quot;createdby&quot;: &quot;#[flowVars.postdata.createdby]&quot;,
+		&quot;geoloction&quot;:&quot;#[flowVars.postdata.geoloction] &quot;}
+}, {
+	&quot;result&quot;: &quot;preferences sucessfully added&quot;
+}]" doc:name="Set Payload"/>
+    </flow>
+</mule>
