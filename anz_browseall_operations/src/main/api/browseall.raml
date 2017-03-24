@@ -1,0 +1,48 @@
+#%RAML 0.8
+title: anz_browseall_operations
+protocols: [http]
+/browseAll:
+  get:
+    queryParameters:
+      guid:
+        displayName: guid
+        type: string 
+      geoLocation:
+        displayName: geoLocation
+        type: string
+      requestedFrom:
+        displayName: responsefrom
+        type: string
+      requestedOn:
+        displayName: requestedOn
+        type: string
+      userid:
+        displayName: userid
+        type: string
+      rangeStart:
+        displayName: rangestart
+        type: string
+      rangeEnd:
+        displayName: rangeend
+        type: string
+   
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+             {  
+                  "header":{
+                  "guid":"1111",
+                  "user_id":"1111",
+                  "responsefrom":"11111",
+                  "responseOn" :"1111"
+                             },
+                  "body":{
+                  "first_name":"john",
+                  "last_name":"john ",
+                  "age":"20 ",
+                  "match_percent":"70",
+                  "profile_completeness":"80",
+                  "profile_privacy":"onlyme "
+              }}

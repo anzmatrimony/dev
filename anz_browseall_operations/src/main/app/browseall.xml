@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <http:listener-config name="browseall-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="browseall-config" raml="browseall.raml" consoleEnabled="false" doc:name="Router"/>
+    <db:mysql-config name="MySQL_Configuration" host="192.168.0.115" port="3306" user="anz_user" password="User@123" database="anz_user_schema" doc:name="MySQL Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="/anz_user" doc:name="HTTP Request Configuration"/>
+    <flow name="browseall-main">
+        <http:listener config-ref="browseall-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="browseall-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="browseall-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="browseall-console">
+        <http:listener config-ref="browseall-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="browseall-config" doc:name="APIkit Console"/>
+    </flow>
+
+    <apikit:mapping-exception-strategy name="browseall-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    <flow name="get:/browseAll:browseall-config">
+        <set-variable variableName="qp" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <set-payload value="{&quot;from&quot; : &quot;#[flowVars.qp.rangeStart]&quot;,&quot;size&quot;:  #[flowVars.qp.rangeEnd - flowVars.qp.rangeStart + 1],  &quot;_source&quot; : [&quot;first_name&quot;, &quot;last_name&quot;,&quot;age&quot;,&quot;match_percent&quot;,&quot;profile_completeness&quot;,&quot;profile_privacy&quot;] }" doc:name="Set Payload"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/getdata/_search" method="POST" doc:name="HTTP"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" mimeType="application/json" doc:name="JSON to Object"/>
+        <set-variable variableName="var" value="#[[]]" doc:name="Variable"/>
+        <enricher source="#[(_source in payload.hits.hits)]" target="#[flowVars.var]" doc:name="Message Enricher">
+            <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        </enricher>
+        <expression-transformer expression="#[{ 'guid' : flowVars.qp.guid,'user_id' : flowVars.qp.user_id,   'responsefrom' : flowVars.qp.requestedfrom  ,'responseOn' : server.dateTime.withTimeZone('GMT').format('MM/dd/yyyyHH:mm:ss')}]" doc:name="Expression"/>
+        <set-payload value="#[payload]" doc:name="Set Payload"/>
+        <set-variable variableName="op" value="#[payload]" doc:name="Variable"/>
+        <set-payload value="#[[{'header':flowVars.op},{'body':flowVars.var}]]" doc:name="Set Payload"/>
+    </flow>
+
+</mule>
