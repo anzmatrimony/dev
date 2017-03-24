@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <http:listener-config name="images-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="images-config" raml="images.raml" consoleEnabled="false" doc:name="Router"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="anz_user/imageStorage" doc:name="HTTP Request Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration1" host="192.168.0.115" port="9200" basePath="anz_user/imageStorage" doc:name="HTTP Request Configuration"/>
+    <flow name="images-main">
+        <http:listener config-ref="images-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="images-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="images-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="images-console">
+        <http:listener config-ref="images-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="images-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="put:/updateImages:images-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="image_id" value="#[payload.image_id]" doc:name="Variable"/>
+        <set-variable variableName="guid" value="#[payload.guid]" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration1" path="/{image_id}" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="image_id" value="#[flowVars.image_id]"/>
+                <http:uri-param paramName="guid" value="#[flowVars.guid]"/>
+            </http:request-builder>
+        </http:request>
+        <set-payload value="{ &quot;header&quot;:{   &quot;guid&quot;:&quot;#[flowVars.guid]&quot;,    &quot;responseon&quot;:&quot;#[server.dateTime]&quot;,    &quot;responsefrom&quot;:&quot;Elasticsearch&quot;,    &quot;geolocation&quot;:&quot;&quot;,    &quot;userid&quot; :&quot;#[flowVars.image_id]&quot;    },    &quot;body&quot;:{&quot;message&quot; : &quot;Image updated successfully&quot;} }" doc:name="Set Payload"/>
+
+    </flow>
+    <flow name="delete:/deleteImage:images-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="image_id" value="#[message.inboundProperties.'http.query.params'.image_id]" doc:name="Variable"/>
+        <set-variable variableName="guid" value="#[message.inboundProperties.'http.query.params'.guid]" doc:name="Variable"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{image_id}" method="DELETE" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="image_id" value="#[flowVars.image_id]"/>
+                <http:uri-param paramName="guid" value="#[flowVars.guid]"/>
+            </http:request-builder>
+        </http:request>
+        <set-payload value="{&quot;header&quot;:{   &quot;guid&quot;:&quot;#[flowVars.guid]&quot;,   &quot;responseon&quot;:&quot;#[server.dateTime]&quot;,   &quot;responsefrom&quot;:&quot;Elasticsearch&quot;,   &quot;userid&quot;:&quot;#[flowVars.image_id]&quot;    },   &quot;body&quot;:{&quot;message&quot; : &quot;Image deleted&quot; }   }" doc:name="Set Payload"/>
+
+    </flow>
+    <flow name="get:/getImages:images-config">
+        <set-variable variableName="image_id" value="#[message.inboundProperties.'http.query.params'.image_id]" doc:name="Variable"/>
+        <set-variable variableName="check" value="#[message.inboundProperties.'http.query.params']" doc:name="Variable"/>
+        <set-variable variableName="guid" value="#[message.inboundProperties.'http.query.params'.guid]" doc:name="Variable"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{image_id}" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="image_id" value="#[flowVars.image_id]"/>
+                <http:uri-param paramName="guid" value="#[flowVars.guid]"/>
+            </http:request-builder>
+        </http:request>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="sample" value="#[payload._source]" doc:name="Variable"/>
+        <expression-transformer mimeType="application/json" expression="#[[{'header':flowVars.check},{'body':flowVars.sample}]]" doc:name="Expression"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+
+    </flow>
+    <flow name="post:/createImages:images-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="image_id" value="#[payload.image_id]" doc:name="Variable"/>
+        <set-variable variableName="guid" value="#[payload.guid]" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{image_id}" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="image_id" value="#[flowVars.image_id]"/>
+                <http:uri-param paramName="guid" value="#[flowVars.guid]"/>
+            </http:request-builder>
+        </http:request>
+        <set-payload value="{ &quot;header&quot;:{   &quot;guid&quot;:&quot;#[flowVars.guid]&quot;,    &quot;responseon&quot;:&quot;#[server.dateTime]&quot;,    &quot;responsefrom&quot;:&quot;Elasticsearch&quot;,    &quot;geolocation&quot;:&quot;&quot;,    &quot;userid&quot; :&quot;#[flowVars.image_id]&quot;    },    &quot;body&quot;:{&quot;message&quot; : &quot;Image created successfully&quot;} }" doc:name="Set Payload"/>
+    </flow>
+
+    <apikit:mapping-exception-strategy name="images-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+</mule>

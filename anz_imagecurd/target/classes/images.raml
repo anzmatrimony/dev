@@ -1,0 +1,163 @@
+#%RAML 0.8
+title: ANZ_IMAGE_OPERATIONS
+protocols: [http]
+/getImages:
+  get:
+    queryParameters:
+      guid:
+        displayName: guid
+        type: string
+       
+      requestedon:
+        displayName: requestedon
+        type: date
+      requestedfrom:
+        displayName: requestedfrom
+        type: string
+      userid:
+        displayName: userid
+        type: string
+        
+      geolocation:
+        displayName: geolocation
+        type: string
+      image_id:
+        displayName: image_id
+        type : string
+    responses:
+              200:
+                body:
+                  application/json:
+                    example: |
+                      {"header":{
+                        "guid":"",
+                         "responseon":"",
+                         "responsefrom":"",
+                         "userid" :""
+
+                         },
+                         "body":{
+                        "image_name" : "123456",
+                        "user_ref" : "123e4",
+                        "createdOn" : "123456",
+                        "modifiedOn" : "123456",
+                        "imagesrc" : "",
+                        "image_id" : "123"
+                        }
+                        }
+/updateImages:
+
+  put:
+    body:
+      application/json:
+        example: |
+          {
+           "header":{
+             "guid":"",
+              "requestedon":"",
+              "requestedfrom":"",
+              "geolocation":"",
+              "userid" :""
+              },
+              "body":{
+             "user_ref" : "123e4",
+             "image_id" : "2345",
+            "image_name" : "123456",
+            "createdOn" : "123456",
+            "modifiedOn" : "123456",
+            "imagesrc" : ""
+            }
+            }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+              "header":{
+                "guid":"",
+                 "responseon":"",
+                 "responsefrom":"",
+                 "geolocation":"",
+                 "userid" :""
+                 },
+                 "body":{"message" : "Image updated successfully"}
+              }
+/createImages:
+  post:
+    body:
+      application/json:
+       example: |
+         {
+         "header":{
+           "guid":"",
+           "requestedon":"",
+           "requestedfrom":"",
+           "userid":"",
+           "geolocation":""
+
+           },
+           "body":{
+              "user_ref" : "123e4",
+              "image_id" : "2345",
+             "image_name" : "123456",
+             "createdon" : "123456",
+             "modifiedOn" : "123456",
+             "imagesrc" : ""
+             }
+         }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+              "header":{
+                "guid":"",
+                "responseon":"",
+                "responsefrom":"",
+                "userid":""
+                },
+                "body":{"message" : "Image created successfuly"}
+              }
+/deleteImage:
+    delete:
+      queryParameters:
+        image_id:
+          displayName: image_id
+          type : string
+        guid:
+          displayName: guid
+          type : string
+      body:
+        application/json:
+         example: |
+           {
+           "header":{
+             "guid":"",
+             "requestedon":"",
+             "requestedfrom":"",
+             "userid":""
+             },
+             "body":{
+             "image_id" : "134",
+                "user_ref" : "2341",
+               "image_name" : "123456",
+               "createdon" : "123456",
+               "modifiedOn" : "123456",
+               "imagesrc" : ""
+               }
+           }
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+               {"header":{
+                 "guid":"",
+                 "responseon":"",
+                 "responsefrom":"",
+                 "userid":""
+                  },
+                 "body":{"message" : "Image deleted" }
+                 }
