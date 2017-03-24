@@ -1,0 +1,78 @@
+#%RAML 0.8
+title: ANZ_REGISTRATION_OPERATIONS
+version: 1.0
+baseUri: https://registration
+protocols: [HTTP]
+/Registration:
+  post:
+     body:
+      application/json:
+        example: |
+          {
+           "header":
+             {
+            "guid":"",
+            "requestedOn":"",
+            "requestedFrom" :"",
+            "userid" : "",
+            "geoLocation":""
+             },
+              "body":{
+            "user_ref" : "vijay123",
+            "user_ID" : "vijay@yahoo.com",
+            "email_id" : "vijay@yahoo.com",
+            "gender" : "male",
+            "dob" : "25-08-1988",
+            "religion" : "hindu",
+            "mobile_phone" : "9885788736",
+            "password" : "*******",
+            "first_name" : "NA",
+            "last_name" : "NA",
+            "profile_for" : "NA",            
+            "height" : "NA",
+            "weight" : "NA",
+            "body_type" : "NA",
+            "diet" : "NA",
+            "drink" : "NA",
+            "smoke" : "NA",
+            "marital_status" : "NA",            
+            "community" : "NA",
+            "sub_community" : "NA",
+            "fb_id" : "NA",
+            "twitter_id" : "NA",
+            "linkedin_id" : "NA",
+            "home_phone" : "NA",
+            "mother_tongue" : "NA",
+            "education_level" : "NA",
+            "working_organization" : "NA",
+            "designation" : "NA",
+            "income" : "NA",
+            "country" : "NA",
+            "state" : "NA",
+            "city" : "NA",
+            "express" : "NA",
+            "profile_type" : "NA",
+            "createdOn"  : "NA",
+            "createdBy" : "NA",
+            "modifiedOn" : "NA",
+            "modifiedBy":"NA",
+            "ef1" : "NA",
+            "ef2":"NA",
+            "ef3" : "NA"
+            }
+            }
+     responses:
+      201:
+        body:
+          application/json:
+            example: |
+             {
+              "header":{
+                "guid":"",
+                "responseOn":"",
+                "responseFrom" :"",
+                "userid" : ""
+                  },
+                "body":{
+                  "message" :"Registration Successfull (but not really)"
+               }}

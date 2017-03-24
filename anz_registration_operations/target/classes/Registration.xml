@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <http:listener-config name="Registration-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="Registration-config" raml="Registration.raml" consoleEnabled="false" doc:name="Router"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="anz_user_schema/user_info" doc:name="HTTP Request Configuration"/>
+    <db:mysql-config name="MySQL_Configuration" host="192.168.0.115" port="3306" user="anz_user" password="User@123" database="anz_user_schema" doc:name="MySQL Configuration"/>
+    <flow name="Registration-main">
+        <http:listener config-ref="Registration-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="Registration-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="Registration-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="Registration-console">
+        <http:listener config-ref="Registration-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="Registration-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="post:/Registration:Registration-config">
+        <flow-ref name="MainFlow" doc:name="MainFlow"/>
+
+        <set-payload value="{&#xA; &quot;header&quot;:{&#xA;   &quot;guid&quot;:&quot;&quot;,&#xA;   &quot;responseOn&quot;:&quot;&quot;,&#xA;   &quot;responseFrom&quot; :&quot;&quot;,&#xA;   &quot;userid&quot; : &quot;&quot;&#xA;     },&#xA;   &quot;body&quot;:{&#xA;     &quot;message&quot; :&quot;Registration Successfull (but not really)&quot;&#xA;  }}" doc:name="Set Payload"/>
+    </flow>
+    <apikit:mapping-exception-strategy name="Registration-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    <flow name="MainFlow">
+
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-session-variable variableName="jsondata" value="#[message.payload]" doc:name="Session Variable"/>
+        <flow-ref name="ConnectToDataBase" doc:name="ConnectToDataBase"/>
+        <choice doc:name="Choice">
+            <when expression="#[message.payload=='success!!']">
+                <flow-ref name="ConnectToElasticSearch" doc:name="ConnectToElasticSearch"/>
+            </when>
+            <otherwise>
+                <logger message="DATA NO SEND TO ELASTIC SEARCH" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+    </flow>
+      <flow name="ConnectToDataBase">
+        <db:insert config-ref="MySQL_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[INSERT INTO USERINFO (user_ref, user_ID, profile_for, email_id, first_name, last_name, gender, dob, height, weight, body_type, diet, drink, smoke, marital_status, religion, community, sub_community, fb_id, twitter_id, linkedin_id, home_phone, mobile_phone, mother_tongue, education_level, working_organization, designation, income, country, state) VALUES (#[payload.user_ref], #[payload.user_ID], #[payload.profile_for], #[payload.email_id], #[payload.first_name], #[payload.last_name], #[payload.gender], #[payload.dob], #[payload.height], #[payload.weight], #[payload.body_type], #[payload.diet], #[payload.drink], #[payload.smoke], #[payload.marital_status], #[payload.religion], #[payload.community], #[payload.sub_community], #[payload.fb_id], #[payload.twitter_id], #[payload.linkedin_id], #[payload.home_phone], #[payload.mobile_phone], #[payload.mother_tongue], #[payload.education_level], #[payload.working_organization], #[payload.designation], #[payload.income], #[payload.country], #[payload.state]);]]></db:parameterized-query>
+        </db:insert>
+        <set-payload value="success!!" doc:name="Set Payload"/>
+    </flow>
+    <flow name="ConnectToElasticSearch">
+        <set-payload value="#[sessionVars.jsondata]" doc:name="Set Payload"/>
+        <set-variable variableName="user_ref" value="#[payload.user_ref]" doc:name="Variable"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{user_ref}" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user_ref" value="#[flowVars.user_ref]"/>
+
+            </http:request-builder>
+        </http:request>
+
+    </flow>
+</mule>
