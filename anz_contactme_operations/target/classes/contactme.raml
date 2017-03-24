@@ -1,0 +1,115 @@
+#%RAML 0.8
+title: anz_contactme_operations
+version: 1.0
+protocols: [http]
+/contactMe:
+ get:
+    queryParameters:
+      user_id:
+        displayName: user_id
+        type: string 
+   
+   
+   
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+             {  
+               
+                 "body":{
+                     "user_id":"1234",
+                     "age" : "1234",
+                     "religion" : "1234",
+                     "community" : "1234",
+                     "motherTounge" : "1234",
+                     "maritalStatus" : "available",
+                     "country" : "1-1-2017",
+                     "height" : "1-1-2017"
+                     
+
+              }}
+/createContactMe: 
+ post:
+     body:
+        application/json:
+            example: |
+               {
+                    "body": {
+                      "user_id":"1234",
+                     "age" : "1234",
+                     "religion" : "1234",
+                     "community" : "1234",
+                     "motherTounge" : "1234",
+                     "maritalStatus" : "available",
+                     "country" : "1-1-2017",
+                     "height" : "1-1-2017"
+                          }
+                }
+     responses: 
+       200:
+         body: 
+           application/json:
+             example: | 
+               
+               { message: created successfully  }
+               
+/updateContactMe:               
+ put:
+    body:
+     application/json:
+      example: |
+            {
+                 "body": {
+                     "user_id":"1234",
+                     "age" : "1234",
+                     "religion" : "1234",
+                     "community" : "1234",
+                     "motherTounge" : "1234",
+                     "maritalStatus" : "available",
+                    "country" : "1-1-2017",
+                     "height" : "1-1-2017"
+                          }
+              }
+    responses: 
+          201:
+            body: 
+              application/json:
+               example: |
+                 
+                  { message: successfully updated } 
+
+/deleteContactMe:               
+ delete:
+    body:
+     application/json:
+      example: |
+            {
+                 "body": {
+                      "user_id":"1234",
+                     "age" : "1234",
+                     "religion" : "1234",
+                     "community" : "1234",
+                     "motherTounge" : "1234",
+                     "maritalStatus" : "available",
+                    "country" : "1-1-2017",
+                     "height" : "1-1-2017"
+                          }
+              }
+    responses: 
+          200:
+            body: 
+              application/json:
+               example: |
+                 
+                  { message: successfully deleted } 
+           
+     
+     
+     
+     
+     
+     
+     
+  
