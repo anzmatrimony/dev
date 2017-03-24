@@ -1,0 +1,104 @@
+#%RAML 0.8
+baseUri: https://mocksvc.mulesoft.com/mocks/edea3788-b6b3-4aa5-a372-8773802b0ec3
+title: anz_profile_basic_search
+version: 1.0
+protocols: [HTTP]
+
+/basicSearch:
+  get:
+    queryParameters:
+      guid:
+        displayName: guid
+        type: string
+        required: true
+
+
+      requestedOn:
+        displayName: requestedOn
+        type: string
+        required: true
+
+      requestedFrom:
+        displayName: requestedFrom
+        type: string
+        required: true
+
+      userid:
+        displayName: userid
+        type: string
+        required: true
+
+      geoLocation:
+        displayName: geoLocation
+        type: string
+        required: true
+
+      gender:
+        displayName: gender
+        type: string
+        required: true
+
+      religion:
+        displayName: religion
+        type: string
+        required: true
+
+      agefrom:
+        displayName: agefrom
+        type: integer
+        required: true
+
+      ageto:
+        displayName: ageto
+        type: integer
+        required: true
+      rangefrom:
+        displayName: rangefrom
+        type: integer
+        required: true
+
+      rangeto:
+        displayName: rangeto
+        type: integer
+        required: true
+
+      userref:
+        displayName: userref
+        type: string
+        required: true
+
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+               "header":{
+                 "guid":"",
+                  "responsedatetime":"",
+                  "responsefrom" :"",
+                  "userid":""
+                  },
+               "body":[{
+                "first_name" : "123456",
+                "last_name" : "123456",
+                "gender" : "123456",
+                "dob" : "123456",
+                "religion" : "123456"
+                },
+                {
+                 "first_name" : "123456",
+                 "last_name" : "123456",
+                 "gender" : "123456",
+                 "dob" : "123456",
+                 "religion" : "123456"
+                 },
+                 {
+                  "first_name" : "123456",
+                  "last_name" : "123456",
+                  "gender" : "123456",
+                  "dob" : "123456",
+                  "religion" : "123456"
+                  }]
+
+                }
