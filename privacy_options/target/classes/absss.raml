@@ -1,0 +1,119 @@
+#%RAML 1.0
+ title: privacy
+ protocols: HTTP
+ /createprivacy:
+   post:
+     body:
+       application/json:
+         example: |
+             {
+                 "mobile": {
+                   "options": "accepted",
+                   "userid": ["user1", "user2", "user3"]
+                 },
+                 "fb_id": {
+                   "options": "All",
+                   "userid": []
+                 },
+                 "Twitter_id": {
+                   "options": "None",
+                   "userid": []
+                 },
+                 "Linkedin_id": {
+                   "options": "accepted",
+
+                   "userid": ["user1", "user2", "user3"]
+                 },
+                 "Income": {
+                   "options": "All",
+                   "userid": []
+                 },
+                 "profileprivacy": {
+                   "options": "None",
+                   "userid": []
+                 },
+
+                 "visbleitysettings": {
+                   "options": "accepted",
+
+                   "userid": ["user1", "user2", "user3"]
+                 },
+                 "dnd": {
+                   "options": "All",
+
+                   "userid": []
+                 },
+                 "webnotification": {
+                   "options": "None",
+                   "userid": []
+                 },
+                 "shortlist": {
+                   "options": "accepted",
+
+                   "userid": ["user1", "user2", "user3"]
+                 }
+                }
+     responses:
+       201:
+         body:
+           application/json:
+             example: |
+              {"message":"created"}
+ /updateprivacy:
+   put:
+    body:
+       application/json:
+         example: |
+             {
+                  "mobile": {
+                       "options": "accepted",
+                       "userid": ["user1", "user2", "user3"]
+                     },
+                     "fb_id": {
+                       "options": "All",
+                       "userid": []
+                     },
+                     "Twitter_id": {
+                       "options": "None",
+                       "userid": []
+                     },
+                     "Linkedin_id": {
+                       "options": "accepted",
+
+                       "userid": ["user1", "user2", "user3"]
+                     },
+                     "Income": {
+                       "options": "All",
+                       "userid": []
+                     },
+                     "profileprivacy": {
+                       "options": "None",
+                       "userid": []
+                     },
+
+                     "visbleitysettings": {
+                       "options": "accepted",
+
+                       "userid": ["user1", "user2", "user3"]
+                     },
+                     "dnd": {
+                       "options": "All",
+
+                       "userid": []
+                     },
+                     "webnotification": {
+                       "options": "None",
+                       "userid": []
+                     },
+                     "shortlist": {
+                       "options": "accepted",
+
+                       "userid": ["user1", "user2", "user3"]
+                     }
+                    }
+    responses:
+       201:
+         body:
+           application/json:
+             example: |
+              {"message":"updated"}
