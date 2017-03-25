@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+    <http:request-config name="HTTP_Request_Configuration1" host="192.168.0.115" port="9200" basePath="/anz_user/logdata" doc:name="HTTP Request Configuration"/>
+ <catch-exception-strategy name="Exception_Strategy">
+        <set-variable doc:name="Variable" value="#[exception.getSummaryMessage()]" variableName="excMsg"/>
+         <set-variable doc:name="Variable" value="#[message.inboundProperties.'http.status'==null? 500 : message.inboundProperties['http.status']]" variableName="httpStatus"/>
+        <set-payload value="#[flowVars.excMsg]" doc:name="Set Payload"/>
+        <flow-ref name="logService" doc:name="logService"/>
+        <set-payload value=" #[flowVars.excMsg] " doc:name="Set Payload"/>
+         <set-property propertyName="http.status" value="#[flowVars.httpStatus]" doc:name="Property"/>
+    </catch-exception-strategy>
+    <flow name="logservFlow">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <flow-ref name="logService" doc:name="logService"/>
+    </flow>
+
+ <flow name="logService">
+        <set-variable variableName="payloaddata" value="#[payload]" doc:name="Variable"/>
+        <set-variable variableName="guidval" value="#[flowVars.params.guid]" doc:name="Variable"/>
+        <set-payload value="{  &quot;guid&quot;: &quot;#[flowVars.guidval]&quot;,  &quot;userid&quot;:&quot;#[flowVars.params.userid]&quot;, &quot;httpmethod&quot;:&quot;#[sessionVars.httpmethod]&quot;, &quot;responsedatetime&quot;: &quot;#[server.dateTime.withTimeZone('GMT+5:30').format('MM/dd/yyyy,HH:mm:ss')]&quot; , &quot;status&quot;: &quot;#[message.inboundProperties.'http.status'==null? 500 : message.inboundProperties['http.status']]&quot;,  &quot;server_ip&quot;: &quot;#[server.ip]&quot; }" doc:name="add1Payload"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="add1payloaddata" value="#[payload]" doc:name="Variable"/>
+        <expression-transformer mimeType="application/json" expression="#[{'additionaldata':flowVars.add1payloaddata,'PostedData': sessionVars.postedpayload, 'retrievedData': flowVars.payloaddata}]" doc:name="Expression"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <http:request config-ref="HTTP_Request_Configuration1" path="/{guid}" method="POST" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="guid" value="#[flowVars.guidval]"/>
+            </http:request-builder>
+        </http:request>
+        <set-payload value="#[flowVars.payloaddata]" doc:name="Set Payload"/>
+
+    </flow>
+    
+</mule>
