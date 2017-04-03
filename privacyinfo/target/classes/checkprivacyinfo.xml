@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <http:listener-config name="checkprivacyinfo-httpListenerConfig" host="0.0.0.0" port="8087" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="checkprivacyinfo-config" raml="checkprivacyinfo.raml" consoleEnabled="false" doc:name="Router"/>
+    <http:request-config name="HTTP_Request_Configuration" host="192.168.0.115" port="9200" basePath="/anz_user/user_info" doc:name="HTTP Request Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration1" host="192.168.0.115" port="9200" basePath="/anz_user/privacySettings" doc:name="HTTP Request Configuration"/>
+    <flow name="checkprivacyinfo-main">
+        <http:listener config-ref="checkprivacyinfo-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="checkprivacyinfo-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="checkprivacyinfo-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="checkprivacyinfo-console">
+        <http:listener config-ref="checkprivacyinfo-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="checkprivacyinfo-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="get:/getprivacyinfo:checkprivacyinfo-config">
+        <set-session-variable variableName="user_ID" value="#[message.inboundProperties.'http.query.params'.user_ID]" doc:name="Session Variable"/>
+        <set-session-variable variableName="search_ID" value="#[message.inboundProperties.'http.query.params'.userId]" doc:name="Session Variable"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/{userId}" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="userId" value="#[sessionVars.user_ID]"/>
+            </http:request-builder>
+        </http:request>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="userProfile" value="#[payload._source]" doc:name="Variable"/>
+        <http:request config-ref="HTTP_Request_Configuration1" path="/{user_ID}" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="user_ID" value="#[sessionVars.user_ID]"/>
+            </http:request-builder>
+        </http:request>
+        <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        <set-variable variableName="body" value="#[payload._source]" doc:name="Variable"/>
+        <expression-transformer mimeType="application/json" expression="#[{&quot;body&quot;:flowVars.body}]" doc:name="Expression"/>
+        <set-variable variableName="oldpayload" value="#[payload]" doc:name="Variable"/>
+        <set-payload value="{      &quot;mobile&quot;:#[(payload.body.mobile.options.contains('accepted')) ?  payload.body.mobile.user_ID.contains(sessionVars.search_ID) :true],    &quot;Linkedin_id&quot;:#[(  payload.body.Linkedin_id.options.contains('accepted')) ? payload.body.Linkedin_id.user_ID.contains(sessionVars.search_ID) :true],    &quot;Twitter_id&quot;:#[(  payload.body.Twitter_id.options.contains('accepted')) ? payload.body.Twitter_id.user_ID.contains(sessionVars.search_ID) :true],    &quot;privacyProfile&quot;:#[(  payload.body.privacyProfile.options.contains('accepted')) ?  payload.body.privacyProfile.user_ID.contains(sessionVars.search_ID) :true],    &quot;fB_id&quot;:#[(  payload.body.fB_id.options.contains('accepted')) ?  payload.body.fB_id.user_ID.contains(sessionVars.search_ID) :true],    &quot;Income&quot;:#[(  payload.body.Income.options.contains('accepted')) ?  payload.body.Income.user_ID.contains(sessionVars.search_ID) :true],    &quot;visbleitysettings&quot;:#[(  payload.body.visbleitysettings.options.contains('accepted')) ? payload.body.visbleitysettings.user_ID.contains(sessionVars.search_ID) :true],    &quot;dnd&quot;:#[(  payload.body.dnd.options.contains('accepted')) ? payload.body.dnd.user_ID.contains(sessionVars.search_ID) :true],    &quot;webnotification&quot;:#[(  payload.body.webnotification.options.contains('accepted')) ? payload.body.webnotification.user_ID.contains(sessionVars.search_ID) :true],    &quot;shortlist&quot;:#[(  payload.body.shortlist.options.contains('accepted')) ? payload.body.shortlist.user_ID.contains(sessionVars.search_ID) :true] }  " doc:name="Set Payload"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-session-variable variableName="filterVar" value="#[payload]" doc:name="Session Variable"/>
+        <set-payload value="#[flowVars.oldpayload]" doc:name="Set Payload"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <set-payload value="{  &quot;user_ref&quot;: &quot;#[ flowVars.userProfile.user_ref]&quot;,  &quot;user_ID&quot;: &quot;#[ flowVars.userProfile.user_ID]&quot;,  &quot;profile_for&quot;: &quot;#[ flowVars.userProfile.profile_for]&quot;,  &quot;email_id&quot;: &quot;#[ flowVars.userProfile.email_id]&quot;,  &quot;first_name&quot;: &quot;#[ flowVars.userProfile.first_name]&quot;,  &quot;last_name&quot;: &quot;#[ flowVars.userProfile.last_name]&quot;,  &quot;gender&quot;: &quot;#[ flowVars.userProfile.gender]&quot;,  &quot;dob&quot;: &quot;#[ flowVars.userProfile.dob]&quot;,  &quot;height&quot;: &quot;#[ flowVars.userProfile.height]&quot;,  &quot;weight&quot;: &quot;#[ flowVars.userProfile.weight]&quot;,  &quot;body_type&quot;: &quot;#[ flowVars.userProfile.body_type]&quot;,  &quot;diet&quot;: &quot;#[ flowVars.userProfile.diet]&quot;,  &quot;drink&quot;: &quot;#[ flowVars.userProfile.drink]&quot;,  &quot;smoke&quot;: &quot;#[ flowVars.userProfile.smoke]&quot;,  &quot;marital_status&quot;: &quot;#[ flowVars.userProfile.marital_status]&quot;,  &quot;religion&quot;: &quot;#[ flowVars.userProfile.religion]&quot;,  &quot;community&quot;: &quot;#[ flowVars.userProfile.community]&quot;,  &quot;sub_community&quot;: &quot;#[ flowVars.userProfile.sub_community]&quot;,  &quot;fb_id&quot;: &quot;#[(sessionVars.filterVar.fB_id) ? flowVars.userProfile.fb_id : 'NA']&quot;,  &quot;twitter_id&quot;: &quot;#[(sessionVars.filterVar.Twitter_id) ? flowVars.userProfile.twitter_id : 'NA']&quot;,  &quot;linkedin_id&quot;: &quot;#[ (sessionVars.filterVar.Linkedin_id) ? flowVars.userProfile.linkedin_id : 'NA']&quot;,  &quot;home_phone&quot;: &quot;#[ flowVars.userProfile.home_phone]&quot;,  &quot;mobile_phone&quot;: &quot;#[ (sessionVars.filterVar.mobile) ? flowVars.userProfile.mobile_phone : 'NA']&quot;,  &quot;mother_tongue&quot;: &quot;#[ flowVars.userProfile.mother_tongue]&quot;,  &quot;education_level&quot;: &quot;#[ flowVars.userProfile.education_level]&quot;,  &quot;working_organization&quot;: &quot;#[ flowVars.userProfile.working_organization]&quot;,  &quot;designation&quot;: &quot;#[ flowVars.userProfile.designation]&quot;,  &quot;income&quot;: &quot;#[(sessionVars.filterVar.Income) ? flowVars.userProfile.income : 'NA']&quot;,  &quot;country&quot;: &quot;#[ flowVars.userProfile.country]&quot;,  &quot;state&quot;: &quot;#[ flowVars.userProfile.state]&quot;,  &quot;city&quot;: &quot;#[ flowVars.userProfile.city]&quot;,  &quot;express&quot;: &quot;#[ flowVars.userProfile.express]&quot;,  &quot;profile_type&quot;: &quot;#[(sessionVars.filterVar.privacyProfile) ? flowVars.userProfile.profile_type : 'NA']&quot; }" doc:name="Set Payload"/>
+        <logger message="#[sessionVars.filterVar]" level="INFO" doc:name="Logger"/>
+
+    </flow>
+    <apikit:mapping-exception-strategy name="checkprivacyinfo-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+</mule>
